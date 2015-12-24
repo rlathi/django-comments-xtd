@@ -16,8 +16,10 @@ from django.core.urlresolvers import reverse, NoReverseMatch
 from django.test import TestCase
 # from django.test.utils import override_settings
 
-from django_comments_xtd import (comment_was_posted, django_comments,
-                                 signals, signed)
+import django_comments
+from django_comments.signals import comment_was_posted
+
+from django_comments_xtd import signals, signed
 from django_comments_xtd.conf import settings
 from django_comments_xtd.models import XtdComment, TmpXtdComment
 from django_comments_xtd.tests.models import Article, Diary
@@ -120,7 +122,8 @@ class ConfirmCommentTestCase(TestCase):
         except:
             comment = None
         self.assert_(comment != None)
-        self.assertRedirects(self.response, self.article.get_absolute_url())
+        redirected_to = 'http://testserver%s' % self.article.get_absolute_url()
+        self.assertRedirects(self.response, redirected_to)
 
     def test_notify_comment_followers(self):
         # send a couple of comments to the article with followup=True and check

@@ -2,9 +2,8 @@ import os
 import sys
 
 def setup_django_settings():
-    os.chdir(os.path.join(os.path.dirname(__file__), ".."))
     sys.path.insert(0, os.getcwd())
-    os.environ["DJANGO_SETTINGS_MODULE"] = "tests.settings"
+    os.environ["DJANGO_SETTINGS_MODULE"] = "django_comments_xtd.tests.settings"
 
 
 def run_tests():
@@ -15,11 +14,8 @@ def run_tests():
     from django.conf import settings
     from django.test.utils import get_runner
 
-    if django.VERSION[1] >= 7: # Django 1.7.x or above
-        django.setup()
-        runner = get_runner(settings,"django.test.runner.DiscoverRunner")
-    else:
-        runner = get_runner(settings,"django.test.simple.DjangoTestSuiteRunner")
+    django.setup()
+    runner = get_runner(settings, "django.test.runner.DiscoverRunner")
     test_suite = runner(verbosity=2, interactive=True, failfast=False)
     return test_suite.run_tests(["django_comments_xtd"])
 

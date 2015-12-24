@@ -1,6 +1,7 @@
 from django.test import TestCase
 
-from django_comments_xtd import django_comments
+import django_comments
+
 from django_comments_xtd.models import TmpXtdComment
 from django_comments_xtd.forms import XtdCommentForm
 from django_comments_xtd.tests.models import Article

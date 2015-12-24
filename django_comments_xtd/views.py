@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import six
 
-from django.db import models
+from django.apps import apps
 from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponseRedirect
@@ -9,7 +9,9 @@ from django.shortcuts import redirect, render_to_response
 from django.template import loader, Context, RequestContext
 from django.utils.translation import ugettext_lazy as _
 
-from django_comments_xtd import get_form, comment_was_posted, signals, signed
+from django_comments.signals import comment_was_posted
+
+from django_comments_xtd import get_form, signals, signed
 from django_comments_xtd import get_model as get_comment_model
 from django_comments_xtd.conf import settings
 from django_comments_xtd.models import (TmpXtdComment, 
@@ -86,7 +88,7 @@ def on_comment_was_posted(sender, comment, request, **kwargs):
     else:
         ctype = request.POST["content_type"]
         object_pk = request.POST["object_pk"]
-        model = models.get_model(*ctype.split("."))
+        model = apps.get_model(*ctype.split(".", 1))
         target = model._default_manager.get(pk=object_pk)
         key = signed.dumps(comment, compress=True, 
                            extra_key=settings.COMMENTS_XTD_SALT)
@@ -163,8 +165,8 @@ def notify_comment_followers(comment):
             signed.dumps(instance, compress=True,
                          extra_key=settings.COMMENTS_XTD_SALT))
 
-    model = models.get_model(comment.content_type.app_label,
-                             comment.content_type.model)
+    model = apps.get_model(comment.content_type.app_label,
+                           comment.content_type.model)
     target = model._default_manager.get(pk=comment.object_pk)
     subject = _("new comment posted")
     text_message_template = loader.get_template(
@@ -236,8 +238,8 @@ def mute(request, key):
         is_public=True, followup=True, user_email=comment.user_email
     ).update(followup=False)
 
-    model = models.get_model(comment.content_type.app_label,
-                             comment.content_type.model)
+    model = apps.get_model(comment.content_type.app_label,
+                           comment.content_type.model)
     target = model._default_manager.get(pk=comment.object_pk)
     
     template_arg = [

@@ -1,7 +1,8 @@
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
-from django_comments_xtd import CommentForm
+from django_comments.forms import CommentForm
+
 from django_comments_xtd.conf import settings
 from django_comments_xtd.models import TmpXtdComment
 
