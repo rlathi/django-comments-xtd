@@ -8,12 +8,13 @@ setup_dict = {
     'packages': find_packages(),
     'include_package_data': True,
     'license': 'MIT',
-    'description': ("Django comments extension app with thread support, "
-                    "follow up notifications and email confirmations."),
+    'description': ("Django comments app with comment thread support, "
+                    "follow up notifications, email confirmation and "
+                    "Ajax support."),
     'long_description': ("A reusable Django app that extends django-contrib"
-                         "-comments with thread support, follow up "
-                         "notifications, and comments that only hits the "
-                         "database when users confirm them by email."),
+                         "-comments with comment threading, follow up "
+                         "notifications, comments that only hits the database "
+                         "when users confirm them by email and Ajax support."),
     'author': 'Daniel Rus Morales',
     'author_email': 'mbox@danir.us',
     'maintainer': 'Daniel Rus Morales',

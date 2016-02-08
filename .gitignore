@@ -9,3 +9,7 @@ build/
 dist/
 .coverage
 .emacs.desktop*
+.tox
+.cache
+ghostdriver.log
+npm-debug.log

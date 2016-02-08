@@ -1,6 +1,7 @@
 import os
 import sys
 
+
 def setup_django_settings():
     sys.path.insert(0, os.getcwd())
     os.environ["DJANGO_SETTINGS_MODULE"] = "django_comments_xtd.tests.settings"

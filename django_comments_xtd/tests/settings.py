@@ -16,7 +16,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE':   'django.db.backends.sqlite3', 
-        'NAME':     'django_comments_xtd_test_db',
+        'NAME':     'django_comments_xtd_test',
         'USER':     '', 
         'PASSWORD': '', 
         'HOST':     '', 
@@ -92,5 +92,4 @@ COMMENTS_XTD_SALT = b"es-war-einmal-una-bella-princesa-in-a-beautiful-castle"
 COMMENTS_XTD_MAX_THREAD_LEVEL = 2
 COMMENTS_XTD_MAX_THREAD_LEVEL_BY_APP_MODEL = {'tests.diary': 0}
 
-TEST_RUNNER = 'django.test.runner.DiscoverRunner'
 
