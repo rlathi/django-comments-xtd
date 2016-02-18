@@ -13,3 +13,4 @@ dist/
 .cache
 ghostdriver.log
 npm-debug.log
+django_comments_xtd_demo

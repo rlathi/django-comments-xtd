@@ -32,14 +32,17 @@ A fibonacci generator in Python, taken from `LiteratePrograms <http://en.literat
             a, b = b, a + b'''
         result = render_markup_comment(comment)
         self.assertEqual(result,
-                         ('<div class="document">\n<p>A fibonacci generator '
-                          'in Python, taken from <a class="reference external" '
-                          'href="http://en.literateprograms.org/'
-                          'Fibonacci_numbers_%28Python%29">LiteratePrograms</a>'
-                          ':</p>\n<pre class="literal-block">\n'
-                          'def fib():\n    a, b = 0, 1\n    while 1:\n        '
-                          'yield a\n        a, b = b, a + b\n</pre>\n</div>\n')
-        )
+                         r'''<div class="document">
+<p>A fibonacci generator in Python, taken from <a class="reference external" href="http://en.literateprograms.org/Fibonacci_numbers_%28Python%29">LiteratePrograms</a>:</p>
+<pre class="literal-block">
+def fib():
+    a, b = 0, 1
+    while 1:
+        yield a
+        a, b = b, a + b
+</pre>
+</div>
+''')
 
 
 @unittest.skipIf(not formatter, "This test case needs django-markup, docutils and markdown installed to be run")

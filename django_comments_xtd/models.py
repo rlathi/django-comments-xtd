@@ -8,6 +8,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext, ugettext_lazy as _
 
 from django_comments.models import Comment
+
 from django_comments_xtd.conf import settings
 
 

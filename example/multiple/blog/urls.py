@@ -4,7 +4,8 @@ from django.views.generic import ListView, DateDetailView, DetailView
 from django_comments_xtd.models import XtdComment
 
 from multiple.blog.models import Story, Quote
-from multiple.blog.views import homepage, StoryDetailView, QuoteDetailView
+from multiple.blog.views import (homepage, StoryDetailView, QuoteDetailView,
+                                 CommentsView)
 
 
 urlpatterns = [
@@ -27,11 +28,7 @@ urlpatterns = [
         name='blog-quote-detail'),
 
     # list all comments using pagination, newer first
-    url(r'^comments$', 
-        ListView.as_view(
-            queryset=XtdComment.objects.for_app_models("blog.story", 
-                                                       "blog.quote"), 
-            template_name="django_comments_xtd/blog/comment_list.html",
-            paginate_by=5),
+    url(r'^comments$',
+        CommentsView.as_view(),
         name='blog-comments'),
 ]
