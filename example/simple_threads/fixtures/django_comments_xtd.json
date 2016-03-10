@@ -1,101 +1,101 @@
 [
-    {
-        "pk": 1,
-        "model": "django_comments_xtd.xtdcomment",
-        "fields": {
-            "followup": false,
-            "thread_id": 1,
-            "level": 0,
-            "order": 1,
-            "parent_id": 1
-        }
-    },
-    {
-        "pk": 3,
-        "model": "django_comments_xtd.xtdcomment",
-        "fields": {
-            "followup": false,
-            "thread_id": 1,
-            "level": 1,
-            "order": 2,
-            "parent_id": 1
-        }
-    },
-    {
-        "pk": 8,
-        "model": "django_comments_xtd.xtdcomment",
-        "fields": {
-            "followup": false,
-            "thread_id": 1,
-            "level": 2,
-            "order": 3,
-            "parent_id": 3
-        }
-    },
-    {
-        "pk": 4,
-        "model": "django_comments_xtd.xtdcomment",
-        "fields": {
-            "followup": false,
-            "thread_id": 1,
-            "level": 1,
-            "order": 4,
-            "parent_id": 1
-        }
-    },
-    {
-        "pk": 7,
-        "model": "django_comments_xtd.xtdcomment",
-        "fields": {
-            "followup": false,
-            "thread_id": 1,
-            "level": 2,
-            "order": 5,
-            "parent_id": 4
-        }
-    },
-    {
-        "pk": 2,
-        "model": "django_comments_xtd.xtdcomment",
-        "fields": {
-            "followup": false,
-            "thread_id": 2,
-            "level": 0,
-            "order": 1,
-            "parent_id": 2
-        }
-    },
-    {
-        "pk": 5,
-        "model": "django_comments_xtd.xtdcomment",
-        "fields": {
-            "followup": false,
-            "thread_id": 2,
-            "level": 1,
-            "order": 2,
-            "parent_id": 2
-        }
-    },
-    {
-        "pk": 6,
-        "model": "django_comments_xtd.xtdcomment",
-        "fields": {
-            "followup": false,
-            "thread_id": 2,
-            "level": 2,
-            "order": 3,
-            "parent_id": 5
-        }
-    },
-    {
-        "pk": 9,
-        "model": "django_comments_xtd.xtdcomment",
-        "fields": {
-            "followup": false,
-            "thread_id": 9,
-            "level": 0,
-            "order": 1,
-            "parent_id": 9
-        }
+{
+    "model": "django_comments_xtd.xtdcomment",
+    "pk": 1,
+    "fields": {
+        "thread_id": 1,
+        "parent_id": 1,
+        "level": 0,
+        "order": 1,
+        "followup": false
     }
+},
+{
+    "model": "django_comments_xtd.xtdcomment",
+    "pk": 2,
+    "fields": {
+        "thread_id": 2,
+        "parent_id": 2,
+        "level": 0,
+        "order": 1,
+        "followup": false
+    }
+},
+{
+    "model": "django_comments_xtd.xtdcomment",
+    "pk": 3,
+    "fields": {
+        "thread_id": 1,
+        "parent_id": 1,
+        "level": 1,
+        "order": 2,
+        "followup": false
+    }
+},
+{
+    "model": "django_comments_xtd.xtdcomment",
+    "pk": 4,
+    "fields": {
+        "thread_id": 1,
+        "parent_id": 1,
+        "level": 1,
+        "order": 4,
+        "followup": false
+    }
+},
+{
+    "model": "django_comments_xtd.xtdcomment",
+    "pk": 5,
+    "fields": {
+        "thread_id": 2,
+        "parent_id": 2,
+        "level": 1,
+        "order": 2,
+        "followup": false
+    }
+},
+{
+    "model": "django_comments_xtd.xtdcomment",
+    "pk": 6,
+    "fields": {
+        "thread_id": 2,
+        "parent_id": 5,
+        "level": 2,
+        "order": 3,
+        "followup": false
+    }
+},
+{
+    "model": "django_comments_xtd.xtdcomment",
+    "pk": 7,
+    "fields": {
+        "thread_id": 1,
+        "parent_id": 4,
+        "level": 2,
+        "order": 5,
+        "followup": false
+    }
+},
+{
+    "model": "django_comments_xtd.xtdcomment",
+    "pk": 8,
+    "fields": {
+        "thread_id": 1,
+        "parent_id": 3,
+        "level": 2,
+        "order": 3,
+        "followup": false
+    }
+},
+{
+    "model": "django_comments_xtd.xtdcomment",
+    "pk": 9,
+    "fields": {
+        "thread_id": 9,
+        "parent_id": 9,
+        "level": 0,
+        "order": 1,
+        "followup": false
+    }
+}
 ]

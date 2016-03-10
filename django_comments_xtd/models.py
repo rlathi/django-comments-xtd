@@ -12,6 +12,7 @@ from django_comments.models import Comment
 from django_comments_xtd.conf import settings
 
 
+#----------------------------------------------------------------------
 def max_thread_level_for_content_type(content_type):
     app_model = "%s.%s" % (content_type.app_label, content_type.model)
     if app_model in settings.COMMENTS_XTD_MAX_THREAD_LEVEL_BY_APP_MODEL:
@@ -28,6 +29,7 @@ class MaxThreadLevelExceededException(Exception):
         return ugettext("Can not post comments over the thread level %{max_thread_level}") % {"max_thread_level": self.max_by_app}
 
 
+#----------------------------------------------------------------------
 class XtdCommentManager(models.Manager):
 
     def for_app_models(self, *args):
@@ -102,6 +104,40 @@ class XtdComment(Comment):
         else:
             return False
 
+    @classmethod
+    def tree_from_queryset(cls, queryset):
+        """Converts a XtdComment queryset into a list of nested dictionaries.
+
+        The queryset has to be ordered by thread_id, order.
+        Each dictionary contains two attributes::
+            {
+                'comment': the comment object itself,
+                'children': [list of child comment dictionaries]
+            }
+        """
+        dic_list = []
+        cur_dict = None
+        for obj in queryset:
+            # A new comment at the same level as thread_dict.
+            if cur_dict and obj.level == cur_dict['comment'].level:
+                dic_list.append(cur_dict)
+                cur_dict = None
+            if not cur_dict:
+                cur_dict = {'comment': obj, 'children': []}
+                continue
+            if obj.parent_id == cur_dict['comment'].pk:
+                cur_dict['children'].append({'comment': obj, 'children': []})
+            else:
+                for item in cur_dict['children']:
+                    if item['comment'].pk == obj.parent_id:
+                        item['children'].append({'comment': obj,
+                                                 'children': []})
+        if cur_dict:
+            dic_list.append(cur_dict)
+        return dic_list
+
+
+#----------------------------------------------------------------------        
 class DummyDefaultManager:
     """
     Dummy Manager to mock django's CommentForm.check_for_duplicate method.

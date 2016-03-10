@@ -177,7 +177,7 @@ Calling signed.loads(s) checks the signature BEFORE unpickling the object -this 
 Signal and receiver
 ===================
 
-In addition to the `signals sent by the Django Comments Framework <https://docs.djangoproject.com/en/1.3/ref/contrib/comments/signals/>`_, django-comments-xtd sends the following signal:
+In addition to the `signals sent by the Django Comments Framework <https://docs.djangoproject.com/en/1.3/ref/contrib/comments/signals/>`_, django-comments-xtd sends the following signals:
 
  * **confirmation_received**: Sent when the user clicks on the confirmation link and before the ``XtdComment`` instance is created in the database.
 
@@ -187,7 +187,7 @@ In addition to the `signals sent by the Django Comments Framework <https://docs.
 Sample use of the ``confirmation_received`` signal
 --------------------------------------------------
 
-You might want to register a receiver for ``confirmation_received``. An example function receiver could check the time stamp in which a user submitted a comment and the time stamp in which the confirmation URL has been clicked. If the difference between them is over 7 days we will discard the message with a graceful `"sorry, it's a too old comment"` template.
+You might want to register a receiver for ``confirmation_received``. An example function receiver could check the time stamp in which a user submitted a comment and the time stamp in which the confirmation URL has been clicked. If the difference between them is over 7 days we will discard the message with a graceful `"sorry, it's too old a comment"` template.
 
 Extending the demo site with the following code will do the job::
 

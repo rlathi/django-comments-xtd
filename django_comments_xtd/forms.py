@@ -8,7 +8,7 @@ from django_comments_xtd.models import TmpXtdComment
 
 class XtdCommentForm(CommentForm):
     followup = forms.BooleanField(
-        required=False, label=_("Notify me of follow up comments via email"))
+        required=False, label=_("Follow up replies"))
     reply_to = forms.IntegerField(required=True, initial=0, widget=forms.HiddenInput())
 
     def __init__(self, *args, **kwargs):
@@ -21,7 +21,7 @@ class XtdCommentForm(CommentForm):
         self.fields['name'] = forms.CharField(
             widget=forms.TextInput(attrs={'placeholder':_('name')}))
         self.fields['email'] = forms.EmailField(
-            label=_("Email"), help_text=_("Required for comment verification"),
+            label=_("Email"), help_text=_("Required for comment verification."),
             widget=forms.TextInput(attrs={'placeholder':_('email')})
             )
         self.fields['url'] = forms.URLField(

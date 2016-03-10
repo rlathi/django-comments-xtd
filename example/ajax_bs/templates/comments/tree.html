@@ -1,0 +1,25 @@
+{% load i18n %}
+{% load static %}
+{% load comments_xtd %}
+
+{% for item in comments %}
+{% if item.comment.level == 0 %}<li class="media">{% else %}<div class="media">{% endif %}
+  <div class="media-left">
+    <a href="{{ item.comment.url }}"><img src="{% static 'img/64x64.svg' %}"></a>
+  </div>
+  <div class="media-body">
+    <h6 class="media-heading">{{ item.comment.submit_date }}&nbsp;-&nbsp;{% if item.comment.url and not item.comment.is_removed %}<a href="{{ item.comment.url }}" target="_new">{% endif %}{{ item.comment.name }}{% if item.comment.url %}</a>{% endif %}</h6>
+    {% if item.comment.is_removed %}
+    <p>{% trans "This comment has been removed." %}</p>
+    {% else %}
+    <p>{{ item.comment.comment|render_markup_comment }}
+      {% if item.comment.allow_thread and not item.comment.is_removed %}<br/><a class="small text-muted" href="{{ item.comment.get_reply_url }}" data-comment-element="replylink" data-comment-id="{{ item.comment.pk }}">{% trans "Reply" %}</a>{% endif %}</p>
+    {% if item.children %}
+    <div class="media">
+      {% include "comments/tree.html" with comments=item.children %}
+    </div>
+    {% endif %}
+    {% endif %}
+  </div>
+{% if item.comment.level == 0 %}</li>{% else %}</div>{% endif %}
+{% endfor %}

@@ -1,5 +1,4 @@
 #-*- coding: utf-8 -*-
-
 import re
 
 from django.contrib.contenttypes.models import ContentType
@@ -20,6 +19,25 @@ formatter = import_formatter()
 register = Library()
 
 
+def _get_content_types(tagname, tokens):
+    content_types = []
+    for token in tokens:
+        try:
+            app, model = token.split('.')
+            content_types.append(
+                ContentType.objects.get(app_label=app, model=model))
+        except ValueError:
+            raise TemplateSyntaxError(
+                "Argument %s in %r must be in the format 'app.model'" % (
+                    token, tagname))
+        except ContentType.DoesNotExist:
+            raise TemplateSyntaxError(
+                "%r tag has non-existant content-type: '%s.%s'" % (
+                    tagname, app, model))
+    return content_types
+
+
+#----------------------------------------------------------------------
 class XtdCommentCountNode(Node):
     """Store the number of XtdComments for the given list of app.models"""
 
@@ -60,8 +78,9 @@ def get_xtdcomment_count(parser, token):
 
     content_types = _get_content_types(tokens[0], tokens[4:])
     return XtdCommentCountNode(as_varname, content_types)
+        
 
-
+#----------------------------------------------------------------------
 class BaseLastXtdCommentsNode(Node):
     """Base class to deal with the last N XtdComments for a list of app.model"""
 
@@ -80,9 +99,10 @@ class RenderLastXtdCommentsNode(BaseLastXtdCommentsNode):
 
     def render(self, context):
         if not isinstance(self.count, int):
-            self.count = int( self.count.resolve(context) )
+            self.count = int(self.count.resolve(context))
 
-        self.qs = XtdComment.objects.for_content_types(self.content_types)[:self.count]
+        self.qs = XtdComment.objects\
+                            .for_content_types(self.content_types)[:self.count]
 
         strlist = []
         for xtd_comment in self.qs:
@@ -101,39 +121,6 @@ class RenderLastXtdCommentsNode(BaseLastXtdCommentsNode):
                 loader.render_to_string(
                     template_arg, {"comment": xtd_comment}, context))
         return ''.join(strlist)
-
-
-class GetLastXtdCommentsNode(BaseLastXtdCommentsNode):
-
-    def __init__(self, count, as_varname, content_types):
-        super(GetLastXtdCommentsNode, self).__init__(count, content_types)
-        self.as_varname = as_varname
-
-    def render(self, context):
-        if not isinstance(self.count, int):
-            self.count = int( self.count.resolve(context) )
-
-        self.qs = XtdComment.objects.for_content_types(self.content_types)[:self.count]
-        context[self.as_varname] = self.qs
-        return ''
-        
-
-def _get_content_types(tagname, tokens):
-    content_types = []
-    for token in tokens:
-        try:
-            app, model = token.split('.')
-            content_types.append(
-                ContentType.objects.get(app_label=app, model=model))
-        except ValueError:
-            raise TemplateSyntaxError(
-                "Argument %s in %r must be in the format 'app.model'" % (
-                    token, tagname))
-        except ContentType.DoesNotExist:
-            raise TemplateSyntaxError(
-                "%r tag has non-existant content-type: '%s.%s'" % (
-                    tagname, app, model))
-    return content_types
 
 
 def render_last_xtdcomments(parser, token):
@@ -155,12 +142,12 @@ def render_last_xtdcomments(parser, token):
     try:
         count = tokens[1]
     except ValueError:
-        raise TemplateSyntaxError(
-            "Second argument in %r tag must be a integer" % tokens[0])
+        raise TemplateSyntaxError("Second argument in %r tag must be a integer"
+                                  % tokens[0])
 
     if tokens[2] != 'for':
-        raise TemplateSyntaxError(
-            "Third argument in %r tag must be 'for'" % tokens[0])
+        raise TemplateSyntaxError("Third argument in %r tag must be 'for'" %
+                                  tokens[0])
 
     try:
         token_using = tokens.index("using")
@@ -168,13 +155,30 @@ def render_last_xtdcomments(parser, token):
         try:
             template = tokens[token_using+1].strip('" ')
         except IndexError:
-            raise TemplateSyntaxError(
-                "Last argument in %r tag must be a relative template path" % tokens[0])       
+            raise TemplateSyntaxError(("Last argument in %r tag must be a "
+                                       "relative template path") % tokens[0])
     except ValueError:
         content_types = _get_content_types(tokens[0], tokens[3:])
         template = None
 
     return RenderLastXtdCommentsNode(count, content_types, template)
+
+
+#----------------------------------------------------------------------
+class GetLastXtdCommentsNode(BaseLastXtdCommentsNode):
+
+    def __init__(self, count, as_varname, content_types):
+        super(GetLastXtdCommentsNode, self).__init__(count, content_types)
+        self.as_varname = as_varname
+
+    def render(self, context):
+        if not isinstance(self.count, int):
+            self.count = int( self.count.resolve(context) )
+
+        self.qs = XtdComment.objects\
+                            .for_content_types(self.content_types)[:self.count]
+        context[self.as_varname] = self.qs
+        return ''
 
 
 def get_last_xtdcomments(parser, token):
@@ -212,6 +216,7 @@ def get_last_xtdcomments(parser, token):
     return GetLastXtdCommentsNode(count, as_varname, content_types)
 
 
+#----------------------------------------------------------------------
 def render_with_filter(markup_filter, lines):
     try:
         if formatter:
@@ -246,18 +251,74 @@ def render_markup_comment(value):
     """
     lines = value.splitlines()
     rawstr = r"""^#!(?P<markup_filter>\w+)$"""
-    match_obj = re.search(rawstr, lines[0])
-    if match_obj:
-        markup_filter = match_obj.group('markup_filter')
-        return render_with_filter(markup_filter, lines[1:])
-    elif settings.COMMENTS_XTD_MARKUP_FALLBACK_FILTER:
-        markup_filter = settings.COMMENTS_XTD_MARKUP_FALLBACK_FILTER
-        return render_with_filter(markup_filter, lines)
-    else:
-        return value
+    try:
+        match_obj = re.search(rawstr, lines[0])
+        if match_obj:
+            markup_filter = match_obj.group('markup_filter')
+            return render_with_filter(markup_filter, lines[1:])
+        elif settings.COMMENTS_XTD_MARKUP_FALLBACK_FILTER:
+            markup_filter = settings.COMMENTS_XTD_MARKUP_FALLBACK_FILTER
+            return render_with_filter(markup_filter, lines)
+        else:
+            return value
+    except IndexError as exc:
+        if not len(value):
+            return ""
 
 
+#----------------------------------------------------------------------
+class GetXtdCommentTreeNode(Node):
+
+    def __init__(self, obj, var_name):
+        self.obj = Variable(obj)
+        self.var_name = var_name
+
+    def render(self, context):
+        obj = self.obj.resolve(context)
+        ctype = ContentType.objects.get_for_model(obj)
+        qs = XtdComment.objects.filter(content_type=ctype,
+                                       object_pk=obj.pk,
+                                       site__pk=settings.SITE_ID)
+        diclist = XtdComment.tree_from_queryset(qs)
+        context[self.var_name] = diclist
+        return ''
+
+
+def get_xtdcomment_tree(parser, token):
+    """
+    Adds to the template context a list of XtdComment dictionaries for the 
+    given object.
+
+    Each XtdComment dictionary has the following attributes::
+        {
+            'xtdcomment': xtdcomment object,
+            'children': [ list of child xtdcomment dicts ]
+        }
+
+    Syntax::
+
+        {% get_xtdcomment_dict_list for [object] as [varname] %}
+
+    Example usage::
+
+        {% get_xtdcomment_dict_list for post as comment_list %}
+
+    """
+    try:
+        tag_name, args = token.contents.split(None, 1)
+    except ValueError:
+        raise TemplateSyntaxError("%s tag requires arguments" %
+                                  token.contents.split()[0])
+    match = re.search(r'for (\w+) as (\w+)', args)
+    if not match:
+        raise TemplateSyntaxError("%s tag had invalid arguments" % tag_name)
+    obj, var_name = match.groups()
+    return GetXtdCommentTreeNode(obj, var_name)
+
+
+#----------------------------------------------------------------------
 register.tag(get_xtdcomment_count)
 register.tag(render_last_xtdcomments)
 register.tag(get_last_xtdcomments)
 register.filter(render_markup_comment)
+register.tag(get_xtdcomment_tree)

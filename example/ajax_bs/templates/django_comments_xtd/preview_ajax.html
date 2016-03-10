@@ -1,0 +1,14 @@
+{% load i18n %}
+{% load comments_xtd %}
+<div class="row">
+  <div class="col-lg-offset-1 col-md-offset-1 col-lg-10 col-md-10">
+    <h5>{% trans "Comment preview" %}</h5>
+    <div class="media">
+      <div class="media-body">
+        <h6 class="media-heading">{% now "N j, Y, P" %}&nbsp;-&nbsp;{% if url %}<a href="{{ url }}" target="_new">{% endif %}{{ name }}{% if url %}</a>{% endif %}</h6>
+        <p>{{ comment|render_markup_comment }}</p>
+      </div>
+    </div>
+    <hr/>
+  </div>
+</div>
