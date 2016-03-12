@@ -7,6 +7,9 @@ from django.db import models
 from django.db.models import permalink
 from django.utils.encoding import python_2_unicode_compatible
 
+from django_comments_xtd.moderation import moderator, SpamModerator
+from ajax_bs.articles.badwords import badwords
+
 
 class PublicManager(models.Manager):
     """Returns published articles that are not in the future."""
@@ -44,3 +47,30 @@ class Article(models.Model):
                  'month': int(self.publish.strftime('%m').lower()),
                  'day': self.publish.day,
                  'slug': self.slug})
+
+
+class BadWordsModerator(SpamModerator):
+    def moderate(self, comment, content_object, request):
+        # Make a dictionary where the keys are the words of the message and
+        # the values are their relative position in the message. 
+        msg = dict([(w, i) for i, w in enumerate(comment.comment.split())])
+        for badword in badwords:
+            if isinstance(badword, str):
+                if badword in msg:
+                    return True
+            else:
+                import ipdb; ipdb.set_trace()
+                lastindex = -1
+                for subword in badword:
+                    if subword in msg:
+                        if lastindex > -1:
+                            if msg[subword] == (lastindex + 1):
+                                lastindex = msg[subword]
+                        else:
+                            lastindex = msg[subword]
+                    else:
+                        break
+                if msg[badword[-1]] == lastindex:
+                    return True
+
+moderator.register(Article, BadWordsModerator)

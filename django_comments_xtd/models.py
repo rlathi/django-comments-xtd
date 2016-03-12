@@ -175,3 +175,24 @@ class TmpXtdComment(dict):
 
     def __reduce__(self):
         return (TmpXtdComment, (), None, None, six.iteritems(self))
+
+
+#----------------------------------------------------------------------
+class BlackListedDomain(models.Model):
+    """
+    A blacklisted domain from which comments should be discarded.
+
+    Automatically populated with a small amount of spamming domains,
+    gathered from http://www.joewein.net/spam/blacklist.htm
+    
+    You can download for free a recent version of the list, and subscribe 
+    to get notified on changes. Changes can be fetched with rsync for a
+    small fee (check their conditions, or use any other Spam filter).    
+    """
+    domain = models.CharField(max_length=200, db_index=True)
+
+    def __str__(self):
+        return self.domain
+
+    class Meta:
+        ordering = ('domain',)

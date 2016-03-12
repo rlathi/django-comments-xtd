@@ -18,6 +18,8 @@ urlpatterns = [
         views.confirm, name='comments-xtd-confirm'),
     url(r'^mute/(?P<key>[^/]+)$',
         views.mute, name='comments-xtd-mute'),
+    url(r'discarded/$',
+        views.discarded, name='comments-xtd-discarded'),
 ]
 
 if settings.COMMENTS_XTD_MAX_THREAD_LEVEL > 0:

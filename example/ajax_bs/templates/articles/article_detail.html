@@ -52,6 +52,7 @@
   $(function() {
     $('#comments').commentsXtd({
       postURL: "{% url 'comments-xtd-post-ajax' %}",
+      discardedURL: "{% url 'comments-xtd-discarded' %}",
       postSuccessCallback: postSuccessCallback,
       postErrorCallback: postErrorCallback,
       replyClickURL: "{% url 'comments-xtd-reply-ajax' cid=0 %}",

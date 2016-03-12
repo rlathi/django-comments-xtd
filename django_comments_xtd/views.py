@@ -64,7 +64,7 @@ def send_email_confirmation_request(
 #----------------------------------------------------------------------
 def _comment_exists(comment):
     """
-    True if exists a XtdComment with same user_name, user_email and submit_date.
+    True if a XtdComment exists with same user_name, user_email and submit_date.
     """
     return (XtdComment.objects.filter(
         user_name=comment.user_name, 
@@ -431,7 +431,12 @@ def post_comment_ajax(request, next=None, using=None):
                                     {'comment': comment},
                                     request=request)
             payload = json.dumps({'status': 'discarded', 'html': html})
-            return HttpResponse(payload, content_type='application/json')
+            key = signed.dumps(comment, compress=True, 
+                               extra_key=settings.COMMENTS_XTD_SALT)
+            response = HttpResponse(payload, content_type='application/json')
+            response.set_cookie('discarded', key, max_age=30)
+                                # path=reverse('comments-xtd-discarded'))
+            return response
     
     # Save the comment and signal that it was saved
     comment.save()
@@ -452,3 +457,26 @@ def post_comment_ajax(request, next=None, using=None):
     payload = json.dumps({'status': 'posted', 'html': html})
     return HttpResponse(payload, content_type='application/json')
     
+
+def discarded(request):
+    if not 'discarded' in request.COOKIES:
+        raise Http404
+    try:
+        tmp_comment = signed.loads(request.COOKIES['discarded'],
+                                   extra_key=settings.COMMENTS_XTD_SALT)
+    except (ValueError, signed.BadSignature):
+        raise Http404
+    else:
+        discarded_template_list = [
+            ("django_comments_xtd/%s/%s/discarded.html"
+             % (tmp_comment.content_type.app_label,
+                tmp_comment.content_type.model)),
+            ("django_comments_xtd/%s/discarded.html" %
+             tmp_comment.content_type.app_label),
+            "django_comments_xtd/discarded.html",
+        ]
+        response = render_to_response(discarded_template_list, 
+                                      {'comment': tmp_comment},
+                                      context_instance=RequestContext(request))
+        response.delete_cookie('discarded')
+        return response

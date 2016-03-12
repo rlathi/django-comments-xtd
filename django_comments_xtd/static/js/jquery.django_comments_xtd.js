@@ -49,7 +49,11 @@
       data: data,
       dataType: 'json',
       success: function(data) {
-	    settings.postSuccessCallback.call(event, data);
+        if(data.status=='discarded') {
+          window.location.href = settings.discardedURL;
+        } else {
+	      settings.postSuccessCallback.call(event, data);
+        }
       },
       error: function(xhr, status, errorThrown) {
         settings.postErrorCallback.call(event, xhr, status, errorThrown);

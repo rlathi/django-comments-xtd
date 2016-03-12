@@ -9,7 +9,7 @@ try:
 except ImportError:
     from django.contrib.comments.admin import CommentsAdmin
 
-from django_comments_xtd.models import XtdComment
+from django_comments_xtd.models import XtdComment, BlackListedDomain
 
 
 class XtdCommentsAdmin(CommentsAdmin):
@@ -41,3 +41,9 @@ class XtdCommentsAdmin(CommentsAdmin):
         return 'c%d' % obj.id
 
 admin.site.register(XtdComment, XtdCommentsAdmin)
+
+
+class BlackListedDomainAdmin(admin.ModelAdmin):
+    search_fields = ['domain']
+
+admin.site.register(BlackListedDomain, BlackListedDomainAdmin)
