@@ -364,7 +364,7 @@ def post_comment_ajax(request, next=None, using=None):
 
     # Check security information
     if form.security_errors():
-        return AjaxBadRequest(
+        return ajax_wrong_request(
             ("The comment form failed security verification: %s" %
              escape(str(form.security_errors()))))
 

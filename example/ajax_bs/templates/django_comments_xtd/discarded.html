@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load comments_xtd %}
+
+{% block header %}{% trans "Comment discarded" %}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-offset-1 col-md-offset-1 col-lg-10 col-md-10">
+    <h4>Comment discarded</h4>
+  </div>
+</div>
+<div class="row">
+  <div class="col-lg-offset-2 col-md-offset-2 col-lg-8 col-md-8">
+    <p>{{ comment.user_name }},</p>
+    <p>{% trans "Based on our terms of use the following comment has been discarded:" %}</p>
+    <blockquote>
+      {{ comment.comment|render_markup_comment }}
+    </blockquote>
+    <p class="text-right">- The policy team</p>
+  </div>
+</div>
+{% endblock %}
