@@ -7,21 +7,24 @@ from django.apps import apps
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render_to_response
 from django.template import loader, Context, RequestContext
 from django.template.loader import render_to_string
 from django.utils.html import escape
+from django.utils.text import unescape_entities
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.http import require_POST
 
 from django_comments.signals import comment_will_be_posted, comment_was_posted
+from django_comments.views.utils import next_redirect
 
 from django_comments_xtd import get_form, signals, signed
 from django_comments_xtd import get_model as get_comment_model
+from django_comments_xtd.forms import FollowUpForm
 from django_comments_xtd.conf import settings
-from django_comments_xtd.models import (TmpXtdComment, 
+from django_comments_xtd.models import (TmpXtdComment,
                                         max_thread_level_for_content_type)
 from django_comments_xtd.utils import send_mail
 
@@ -42,18 +45,18 @@ def send_email_confirmation_request(
     """Send email requesting comment confirmation"""
     subject = _("comment confirmation request")
     confirmation_url = reverse("comments-xtd-confirm", args=[key])
-    message_context = Context({ 'comment': comment, 
-                                'content_object': target, 
-                                'confirmation_url': confirmation_url,
-                                'contact': settings.DEFAULT_FROM_EMAIL,
-                                'site': Site.objects.get_current() })
+    context = {'comment': comment,
+               'content_object': target,
+               'confirmation_url': confirmation_url,
+               'contact': settings.DEFAULT_FROM_EMAIL,
+               'site': Site.objects.get_current()}
     # prepare text message
     text_message_template = loader.get_template(text_template)
-    text_message = text_message_template.render(message_context)
+    text_message = unescape_entities(text_message_template.render(context))
     if settings.COMMENTS_XTD_SEND_HTML_EMAIL:
         # prepare html message
         html_message_template = loader.get_template(html_template)
-        html_message = html_message_template.render(message_context)
+        html_message = html_message_template.render(context)
     else: 
         html_message = None
 
@@ -80,7 +83,6 @@ def _create_comment(tmp_comment):
     Creates a XtdComment from a TmpXtdComment.
     """
     comment = XtdComment(**tmp_comment)
-    comment.is_public = True
     comment.save()
     return comment
 
@@ -103,7 +105,9 @@ def on_comment_was_posted(sender, comment, request, **kwargs):
         if not _comment_exists(comment):
             new_comment = _create_comment(comment)
             comment.xtd_comment = new_comment
-            notify_comment_followers(new_comment)
+            if comment.is_public:
+                notify_comment_followers(new_comment,
+                                         is_secure=request.is_secure())
     else:
         ctype = request.POST["content_type"]
         object_pk = request.POST["object_pk"]
@@ -123,30 +127,44 @@ def sent(request):
         comment_pk = int(comment_pk)
         comment = XtdComment.objects.get(pk=comment_pk)
     except (TypeError, ValueError, XtdComment.DoesNotExist):
-        template_arg = ["django_comments_xtd/posted.html",
-                        "comments/posted.html"]
-        return render_to_response(template_arg, 
-                                  context_instance=RequestContext(request))
-    else:
-        if (request.is_ajax() and comment.user 
-            and comment.user.is_authenticated()):
-            template_arg = [
-                "django_comments_xtd/%s/%s/comment.html" % (
-                    comment.content_type.app_label, 
-                    comment.content_type.model),
-                "django_comments_xtd/%s/comment.html" % (
-                    comment.content_type.app_label,),
-                "django_comments_xtd/comment.html"
-            ]
-            return render_to_response(template_arg, {"comment": comment},
-                                      context_instance=RequestContext(request))
+        pending_template = "django_comments_xtd/pending.html"
+        if request.is_ajax():
+            json_data = {'status': 'pending',
+                         'html': render_to_string(pending_template,
+                                                  request=request)}
+            return HttpResponse(json.dumps(json_data),
+                                content_type='application/json')
         else:
-            return redirect(comment)
+            return render_to_response(pending_template, 
+                                      context_instance=RequestContext(request))
+    else:
+        if (request.is_ajax()
+            and comment.user 
+            and comment.user.is_authenticated()):
+            if comment.is_public:
+                payload = json.dumps({'status': 'posted',
+                                      'url': comment.get_absolute_url()})
+                return HttpResponse(payload, content_type='application/json')
+            else:
+                template = 'django_comments_xtd/moderated_ajax.html'
+                html = render_to_string(template, {"comment": comment},
+                                        request=request)
+                payload = json.dumps({'status': 'moderated', 'html': html})
+                return HttpResponse(payload, content_type='application/json')
+        else:
+            if comment.is_public:
+                return redirect(comment)
+            else:
+                return render_to_response(
+                    "django_comments_xtd/moderated.html",
+                    {'comment': comment},
+                    context_instance=RequestContext(request))
 
 
 #----------------------------------------------------------------------
 def confirm(request, key, 
-            template_discarded="django_comments_xtd/discarded.html"):
+            template_discarded="django_comments_xtd/discarded.html",
+            template_moderated="django_comments_xtd/moderated.html"):
     try:
         tmp_comment = signed.loads(str(key), 
                                    extra_key=settings.COMMENTS_XTD_SALT)
@@ -156,9 +174,9 @@ def confirm(request, key,
     if _comment_exists(tmp_comment):
         raise Http404
     # Send signal that the comment confirmation has been received
-    responses = signals.confirmation_received.send(sender  = TmpXtdComment,
-                                                   comment = tmp_comment,
-                                                   request = request
+    responses = signals.confirmation_received.send(sender=TmpXtdComment,
+                                                   comment=tmp_comment,
+                                                   request=request
     )
     # Check whether a signal receiver decides to discard the comment
     for (receiver, response) in responses:
@@ -168,24 +186,38 @@ def confirm(request, key,
                                       context_instance=RequestContext(request))
 
     comment = _create_comment(tmp_comment)
-    notify_comment_followers(comment)
-    return redirect(comment)
+    if comment.is_public is False:
+        return render_to_response(template_moderated, 
+                                  {'comment': comment},
+                                  context_instance=RequestContext(request))
+    else:
+        notify_comment_followers(comment, is_secure=request.is_secure())
+        return redirect(comment)
 
 
 #----------------------------------------------------------------------
-def notify_comment_followers(comment):
+def notify_comment_followers(comment, is_secure=False):
     followers = {} 
 
-    previous_comments = XtdComment.objects.filter(
-        content_type=comment.content_type,
-        object_pk=comment.object_pk, is_public=True,
-        followup=True).exclude(user_email=comment.user_email)
+    kwargs = {'content_type': comment.content_type,
+              'object_pk': comment.object_pk,
+              'thread_id': comment.thread_id,
+              'is_public': True,
+              'followup': True}
+    previous_comments = XtdComment.objects\
+                                  .filter(**kwargs)\
+                                  .exclude(user_email=comment.user_email)
 
-    for instance in previous_comments:
-        followers[instance.user_email] = (
-            instance.user_name, 
-            signed.dumps(instance, compress=True,
-                         extra_key=settings.COMMENTS_XTD_SALT))
+    for item in previous_comments:
+        followup_payload = "%s;%020d" % (item.user_email, item.id)
+        followup_sign = signed.dumps(followup_payload, compress=True,
+                                     extra_key=settings.COMMENTS_XTD_SALT)
+        checkout_payload = "%s;%020d" % (item.user_email, comment.id)
+        checkout_sign = signed.dumps(checkout_payload, compress=True,
+                                     extra_key=settings.COMMENTS_XTD_SALT)
+        followers[item.user_email] = (item.user_name,
+                                      followup_sign,
+                                      checkout_sign)
 
     model = apps.get_model(comment.content_type.app_label,
                            comment.content_type.model)
@@ -197,16 +229,19 @@ def notify_comment_followers(comment):
         html_message_template = loader.get_template(
             "django_comments_xtd/email_followup_comment.html")
 
-    for email, (name, key) in six.iteritems(followers):
-        mute_url = reverse('comments-xtd-mute', args=[key])
-        message_context = Context({ 'user_name': name,
-                                    'comment': comment, 
-                                    'content_object': target,
-                                    'mute_url': mute_url,
-                                    'site': Site.objects.get_current() })
-        text_message = text_message_template.render(message_context)
+    for email, (name, followup_sign, checkout_sign) in six.iteritems(followers):
+        followup_url = reverse('comments-xtd-followup', args=[followup_sign])
+        checkout_url = reverse('comments-xtd-checkout', args=[checkout_sign])
+        context = {'user_name': name,
+                   'comment': comment, 
+                   'content_object': target,
+                   'followup_url': followup_url,
+                   'checkout_url': checkout_url,
+                   'site': Site.objects.get_current(),
+                   'schema': 'https' if is_secure else 'http'}
+        text_message = unescape_entities(text_message_template.render(context))
         if settings.COMMENTS_XTD_SEND_HTML_EMAIL:
-            html_message = html_message_template.render(message_context)
+            html_message = html_message_template.render(context)
         else:
             html_message = None
         send_mail(subject, text_message, settings.DEFAULT_FROM_EMAIL, 
@@ -274,42 +309,92 @@ def reply_ajax(request, cid):
 
 
 #----------------------------------------------------------------------
-def mute(request, key):
+@csrf_protect
+def followup(request, key):
+    """Allows the user to change the follow-up switch of a comment."""
     try:
-        comment = signed.loads(str(key), 
+        payload = signed.loads(str(key),
                                extra_key=settings.COMMENTS_XTD_SALT)
+        user_email, comment_id = payload.split(';')
+        comment = XtdComment.objects.get(pk=int(comment_id))
     except (ValueError, signed.BadSignature):
         raise Http404
     # the comment does exist if the URL was already confirmed, then: Http404
-    if not comment.followup or not _comment_exists(comment):
-        raise Http404
-
-    # Send signal that the comment thread has been muted
-    signals.comment_thread_muted.send(sender=XtdComment,
-                                      comment=comment,
-                                      request=request)
-
-    XtdComment.objects.filter(
-        content_type=comment.content_type, object_pk=comment.object_pk, 
-        is_public=True, followup=True, user_email=comment.user_email
-    ).update(followup=False)
+    # I'm commenting the following two lines because otherwise the mute link
+    # doesn't work as a switch to turn on/off notifications.
+    # if not comment.followup or not _comment_exists(comment):
+    #     raise Http404
 
     model = apps.get_model(comment.content_type.app_label,
                            comment.content_type.model)
     target = model._default_manager.get(pk=comment.object_pk)
     
-    template_arg = [
-        "django_comments_xtd/%s/%s/muted.html" % (
-            comment.content_type.app_label, 
-            comment.content_type.model),
-        "django_comments_xtd/%s/muted.html" % (
-            comment.content_type.app_label,),
-        "django_comments_xtd/muted.html"
-    ]
-    return render_to_response(template_arg, 
-                              {"content_object": target },
-                              context_instance=RequestContext(request))
+    if comment.user_email != user_email:  # Rare but may happen
+        raise Http404
 
+    if request.method == 'GET':
+        template_arg = ["django_comments_xtd/%s/%s/change_followup.html"
+                        % (comment.content_type.app_label,
+                           comment.content_type.model),
+                        "django_comments_xtd/%s/change_followup.html"
+                        % (comment.content_type.app_label,),
+                        "django_comments_xtd/change_followup.html"]
+        form = FollowUpForm(comment=comment, initial={'key':key})
+        return render_to_response(template_arg,
+                                  {"comment": comment,
+                                   "content_object": target,
+                                   "form": form,
+                                   "key": key},
+                                  context_instance=RequestContext(request))
+
+    elif request.method == 'POST':
+        form = FollowUpForm(request.POST, comment=comment)
+        if form.is_valid():
+            if form.cleaned_data.get('key', None) != key:
+                raise Http404
+        else:
+            raise Http404
+
+        if form.cleaned_data['followup'] != comment.followup:
+        # Send signal to indicate that the comment changed its followup setting
+            signals.comment_followup_toggled.send(sender=XtdComment,
+                                                  comment=comment,
+                                                  request=request)
+            XtdComment.objects.filter(pk=int(comment_id))\
+                              .update(followup=form.cleaned_data['followup'])
+    
+        template_arg = ["django_comments_xtd/%s/%s/change_followup_posted.html"
+                        % (comment.content_type.app_label, 
+                           comment.content_type.model),
+                        "django_comments_xtd/%s/change_followup_posted.html"
+                        % (comment.content_type.app_label,),
+                        "django_comments_xtd/change_followup_posted.html"]
+        return render_to_response(template_arg, 
+                                  {"comment": comment,
+                                   "content_object": target,
+                                   "followup": form.cleaned_data['followup']},
+                                  context_instance=RequestContext(request))
+
+
+def checkout(request, key):
+    """Pre-confirm a potential answer with a cookie while visiting comment.
+    
+    The URL that brings to this view has been delivered to the user in an email
+    as a follow-up notification. By clicking the link the user is redirected to
+    the comment while receiving in the response a cookie that will validate a 
+    potential answer to the comment. This prevent the user from having to
+    confirm her email address again for a 2nd or subsequent comments posted to 
+    the same object.
+    """
+    try:
+        payload = signed.loads(str(key),
+                               extra_key=settings.COMMENTS_XTD_SALT)
+        _, comment_id = payload.split(';')
+        comment = XtdComment.objects.get(pk=int(comment_id))
+        print("I got the comment")
+    except (ValueError, signed.BadSignature):
+        raise Http404
+    return HttpResponseRedirect(comment.get_absolute_url())
 
 #----------------------------------------------------------------------
 @csrf_protect
@@ -420,43 +505,22 @@ def post_comment_ajax(request, next=None, using=None):
     # Check whether a signal receiver decides to kill the process
     for (receiver, response) in responses:
         if response is False:
-            discarded_template_list = [
-                ("django_comments_xtd/%s/%s/discarded_ajax.html"
-                 % (model._meta.app_label, model._meta.model_name)),
-                ("django_comments_xtd/%s/discarded_ajax.html" %
-                 model._meta.app_label),
-                "django_comments_xtd/discarded_ajax.html",
-            ]
-            html = render_to_string(discarded_template_list,
-                                    {'comment': comment},
-                                    request=request)
-            payload = json.dumps({'status': 'discarded', 'html': html})
+            payload = json.dumps({'status': 'discarded',
+                                  'url': reverse('comments-xtd-discarded')})
+            response = HttpResponse(payload, content_type='application/json')
             key = signed.dumps(comment, compress=True, 
                                extra_key=settings.COMMENTS_XTD_SALT)
-            response = HttpResponse(payload, content_type='application/json')
             response.set_cookie('discarded', key, max_age=30)
-                                # path=reverse('comments-xtd-discarded'))
             return response
     
     # Save the comment and signal that it was saved
-    comment.save()
     comment_was_posted.send(sender=comment.__class__,
                             comment=comment,
                             request=request)
 
-    posted_template_list = [
-        ("django_comments_xtd/%s/%s/posted_ajax.html" %
-         (model._meta.app_label, model._meta.model_name)),
-        ("django_comments_xtd/%s/posted_ajax.html" %
-         model._meta.app_label),
-        "django_comments_xtd/posted_ajax.html",
-    ]
-    html = render_to_string(posted_template_list,
-                            {'comment': comment},
-                            request=request)
-    payload = json.dumps({'status': 'posted', 'html': html})
-    return HttpResponse(payload, content_type='application/json')
-    
+    return next_redirect(request, fallback=next or 'comments-comment-done',
+                         c=comment._get_pk_val())    
+
 
 def discarded(request):
     if not 'discarded' in request.COOKIES:

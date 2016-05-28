@@ -16,9 +16,8 @@ urlpatterns = [
     url(r'^articles/', include('ajax_bs.articles.urls')),
     url(r'^comments/', include('django_comments_xtd.urls')),
     url(r'^$', homepage_v, name='homepage'),
-    url(r'^feeds/comments/$', LatestCommentFeed(), name='comments-feed'),    
+    url(r'^feeds/comments/$', LatestCommentFeed(), name='comments-feed'),
 ]
 
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
-    

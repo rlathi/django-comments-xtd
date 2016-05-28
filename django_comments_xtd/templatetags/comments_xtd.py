@@ -278,7 +278,8 @@ class GetXtdCommentTreeNode(Node):
         ctype = ContentType.objects.get_for_model(obj)
         qs = XtdComment.objects.filter(content_type=ctype,
                                        object_pk=obj.pk,
-                                       site__pk=settings.SITE_ID)
+                                       site__pk=settings.SITE_ID,
+                                       is_public=True)
         diclist = XtdComment.tree_from_queryset(qs)
         context[self.var_name] = diclist
         return ''

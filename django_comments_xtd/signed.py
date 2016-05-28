@@ -6,20 +6,21 @@ Functions for creating and restoring url-safe signed pickled objects.
 
 The format used looks like this:
 
->>> signed.dumps("hello")
-'UydoZWxsbycKcDAKLg.AfZVu7tE6T1K1AecbLiLOGSqZ-A'
+>>> sign = signed.dumps("hello")
+>>> sign
+b'gANYBQAAAGhlbGxvcQAu.2rZWU20tq4W1qGsvDyNHQaZ_74hNdKj4k8UKtIDD94M'
 
 There are two components here, separatad by a '.'. The first component is a 
 URLsafe base64 encoded pickle of the object passed to dumps(). The second 
-component is a base64 encoded hmac/SHA1 hash of "$first_component.$secret"
+component is a base64 encoded hmac/SHA256 hash of "$first_component.$secret"
 
 Calling signed.loads(s) checks the signature BEFORE unpickling the object - 
 this protects against malformed pickle attacks. If the signature fails, a 
 ValueError subclass is raised (actually a BadSignature):
 
->>> signed.loads('UydoZWxsbycKcDAKLg.AfZVu7tE6T1K1AecbLiLOGSqZ-A')
+>>> signed.loads(sign)
 'hello'
->>> signed.loads('UydoZWxsbycKcDAKLg.AfZVu7tE6T1K1AecbLiLOGSqZ-A-modified')
+>>> signed.loads(b"%s-modified" % sign)
 ...
 BadSignature: Signature failed: AfZVu7tE6T1K1AecbLiLOGSqZ-A-modified
 
@@ -57,7 +58,7 @@ def dumps(obj, key = None, compress = False, extra_key = b''):
     in the signature, to protect against zip bombs.
     
     extra_key can be used to further salt the hash, in case you're worried 
-    that the NSA might try to brute-force your SHA-1 protected secret.
+    that the NSA might try to brute-force your SHA-256 protected secret.
     """
     pickled = pickle.dumps(obj)
     is_compressed = False # Flag for if it's been compressed or not
@@ -126,4 +127,4 @@ def unsign(signed_value, key = None):
         raise BadSignature('Signature failed: %s' % sig)
 
 def base64_hmac(value, key):
-    return encode(hmac.new(key, value, hashlib.sha1).digest())
+    return encode(hmac.new(key, value, hashlib.sha256).digest())

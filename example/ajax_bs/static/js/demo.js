@@ -1,25 +1,24 @@
-function _showFieldsOnFocus(selector) {
+function showFieldsOnFocus(selector) {
   selector.find('textarea').on('focus', function() {
     selector.find('.visible-on-focus').fadeIn(150);
   });
 }
 
-function replyClickSuccessCallback(data) {
+function onReplyClickSuccess(data) {
   if(data.status=='success') {
-    $('a[data-comment-id='+data.cid+']').after(data.html);
-    _showFieldsOnFocus(
-      $('FORM[data-comment-id='+data.cid+']')
+    $(this).after(data.html);
+    showFieldsOnFocus($('FORM[data-comment-id='+data.cid+']')
     );
   } else if(data.status=='unchanged') {
     $('DIV[data-reply-div='+data.cid+']').toggle();
   }
 }
 
-function replyClickErrorCallback(data) {
-  window.location.href = data.elem.href;
+function onReplyClickError(data) {
+  window.location.href = link.href;
 }
 
-function cleanPreviousState($form) {
+function _cleanPreviousState($form) {
   $form.find('*[data-comment-element=preview]')
     .html('')
     .addClass('hidden');
@@ -31,16 +30,10 @@ function cleanPreviousState($form) {
   $form.find('*[data-comment-element=field-errors]').remove();
 }
 
-function postSuccessCallback(data) {
+function onPostCommentSuccess(data) {
   var $form = $(this.target);
-  cleanPreviousState($form);
+  _cleanPreviousState($form);
   if(data.status=='preview')
-  {
-    $form.find('*[data-comment-element=preview]')
-      .html(data.html)
-      .removeClass('hidden');
-  }
-  else if(data.status=='discarded')
   {
     $form.find('*[data-comment-element=preview]')
       .html(data.html)
@@ -59,12 +52,26 @@ function postSuccessCallback(data) {
       }
     }
   }
+  else if(data.status=='pending' || data.status=='moderated')
+  {
+    $form.parent().html(data.html);
+  }
+  else if(data.status=='posted')
+  {
+    window.location.href = data.elem.href;    
+  }
 }
 
-function postErrorCallback(xhr, status, errorThrown) {
+function onPostCommentError(xhr, status, errorThrown) {
   var $form = $(this.target);
-  cleanPreviousState($form);
+  _cleanPreviousState($form);
   $form.find('*[data-comment-element=errors]')
     .html(xhr.responseJSON.message)
     .removeClass('hidden');
+}
+
+function toggleComment(cid) {
+  $('P#'+cid+'-message').toggleClass('hidden');
+  $('DIV#'+cid+'-children').toggleClass('hidden');
+  $('P#'+cid+'-folded').toggleClass('hidden');
 }

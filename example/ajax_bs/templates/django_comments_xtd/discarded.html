@@ -7,17 +7,13 @@
 {% block content %}
 <div class="row">
   <div class="col-lg-offset-1 col-md-offset-1 col-lg-10 col-md-10">
-    <h4>Comment discarded</h4>
+    <h4>{% trans "Comment discarded." %}</h4>
+    <p>{% trans "Sorry, the email address given for comment verification is marked as a spam source. If it is not the case and we are wrong, please let us know through our contact form. We will be glad to hear from you. Use a different email address and tell us about the rejected one, we will update our database." %}</p>
   </div>
 </div>
 <div class="row">
-  <div class="col-lg-offset-2 col-md-offset-2 col-lg-8 col-md-8">
-    <p>{{ comment.user_name }},</p>
-    <p>{% trans "Based on our terms of use the following comment has been discarded:" %}</p>
-    <blockquote>
-      {{ comment.comment|render_markup_comment }}
-    </blockquote>
-    <p class="text-right">- The policy team</p>
+  <div class="col-lg-offset-1 col-md-offset-1 col-lg-10 col-md-10">
+    <p class="text-right">- The policy team.</p>
   </div>
 </div>
 {% endblock %}

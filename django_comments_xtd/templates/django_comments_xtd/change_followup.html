@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<h4>{% trans "Toggle follow-up notifications" %}</h4>
+<p>Tick the box to enable follow-up notifications of comments posted after yours. Your comment posted to <a href="{{ content_object.get_absolute_url }}">{{ content_object }}</a> is the following:</p>
+<p>{{ comment.submit_date }}&nbsp;-&nbsp;{% if comment.url %}<a href="{{ comment.url }}" target="_new">{% endif %}{{ comment.name }}{% if comment.url %}</a>{% endif %}
+  <blockquote>
+    {{ comment.comment|linebreaks }}
+  </blockquote>
+</p>
+<form action="{% url 'comments-xtd-followup' key=key %}" method="POST">
+  {% csrf_token %}{{ form.key }}
+  <div><label for="id_followup">{{ form.followup }}{{ form.followup.label }}</label></div>
+  <p class="submit">
+    <input type="submit" name="save" class="submit-post" value="{% trans 'Save' %}">
+  </p>
+</form>
+{% endblock %}

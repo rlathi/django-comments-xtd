@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block content %}
+<h4>{% trans "Toggle follow-up notifications" %}</h4>
+<p>
+  {% if followup %}
+  Your request has been registered.<br/>
+  You will receive email notifications of new comments posted after yours:
+  {% else %}
+  Your request has been registered.<br/>
+  You will no longer receive email notifications of new comments posted after yours:
+  {% endif %}
+</p>
+
+<p>Posted to <a href="{{ content_object.get_absolute_url }}">{{ content_object }}</a> is the following:</p>
+<p>{{ comment.submit_date }}&nbsp;-&nbsp;{% if comment.url %}<a href="{{ comment.url }}" target="_new">{% endif %}{{ comment.name }}{% if comment.url %}</a>{% endif %}
+  <blockquote>
+    {{ comment.comment|linebreaks }}
+  </blockquote>
+</p>
+{% endblock %}

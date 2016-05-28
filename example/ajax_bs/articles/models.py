@@ -59,7 +59,6 @@ class BadWordsModerator(SpamModerator):
                 if badword in msg:
                     return True
             else:
-                import ipdb; ipdb.set_trace()
                 lastindex = -1
                 for subword in badword:
                     if subword in msg:
@@ -70,7 +69,8 @@ class BadWordsModerator(SpamModerator):
                             lastindex = msg[subword]
                     else:
                         break
-                if msg[badword[-1]] == lastindex:
+                if msg.get(badword[-1]) and msg[badword[-1]] == lastindex:
+                    print("Comment shouldn't be public")
                     return True
 
 moderator.register(Article, BadWordsModerator)

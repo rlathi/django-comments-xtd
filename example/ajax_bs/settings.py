@@ -110,7 +110,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
-    "django.contrib.staticfiles",
+    'django.contrib.staticfiles',
 
     'django_comments',
     'django_comments_xtd',
@@ -118,22 +118,21 @@ INSTALLED_APPS = (
     'ajax_bs.articles',
 )
 
-# CRISPY_TEMPLATE_PACK = 'bootstrap3'
-
-# EMAIL_HOST          = "smtp.gmail.com"
-# EMAIL_PORT          = "587"
-# EMAIL_HOST_USER     = "username@gmail.com"
-# EMAIL_HOST_PASSWORD = ""
-# EMAIL_USE_TLS       = True # Yes for Gmail
-# DEFAULT_FROM_EMAIL  = "Alice Bloggs <alice@example.com>"
-# SERVER_EMAIL        = DEFAULT_FROM_EMAIL
+EMAIL_HOST          = "smtp.gmail.com"
+EMAIL_PORT          = "587"
+EMAIL_HOST_USER     = "username@gmail.com"
+EMAIL_HOST_PASSWORD = ""
+EMAIL_USE_TLS       = True # Yes for Gmail
+DEFAULT_FROM_EMAIL  = "Alice Bloggs <alice@example.com>"
+SERVER_EMAIL        = DEFAULT_FROM_EMAIL
 
 # Fill in actual EMAIL settings above, and comment out the 
 # following line to let this django demo sending emails
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 COMMENTS_APP = "django_comments_xtd"
 COMMENTS_XTD_CONFIRM_EMAIL = True
 COMMENTS_XTD_SALT = b"es-war-einmal-una-bella-princesa-in-a-beautiful-castle"
 COMMENTS_XTD_MAX_THREAD_LEVEL = 2
 COMMENTS_XTD_FORM_CLASS = "ajax_bs.articles.forms.MyCommentForm"
+COMMENTS_XTD_SEND_HTML_EMAIL = True

@@ -1,20 +1,17 @@
 {% load i18n %}
 {{ user_name }},
 
-{% blocktrans %}There is a new comment following up yours.{% endblocktrans %}
-
-Post: {{ content_object.title }}
-URL:  http://{{ site.domain }}{{ content_object.get_absolute_url }}
-Sent by: {{ comment.name }}, {{ comment.submit_date|date:"SHORT_DATE_FORMAT" }}
-
---- Comment: ---
+{% blocktrans %}There is a new comment following up yours:{% endblocktrans %}
 {{ comment.comment }}
 
+Sent by: {{ comment.name }}, {{ comment.submit_date|date:"SHORT_DATE_FORMAT" }}
+To the post with title: {{ content_object.title }}
 
------
-Click on the following link to mute the comments thread. You will no longer receive follow-up notifications:
+Click on the link [1] to see the post.
+Click on the link [2] to toggle follow-up notifications.
 
-http://{{ site.domain }}{{ mute_url }}
+[1] -> {{ schema }}://{{ site.domain }}{{ checkout_url }}
+[2] -> {{ schema }}://{{ site.domain }}{{ followup_url }}
 
 --
 {% trans "Kind regards" %},

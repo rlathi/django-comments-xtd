@@ -1,0 +1,9 @@
+{% extends "comments/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Comment being moderated." %}{% endblock %}
+
+{% block content %}
+  <h1>{% trans "Comment selected to be moderated." %}</h1>
+  <p>{% trans "Your comment has been automatically selected to be moderated." %}</p>
+{% endblock %}

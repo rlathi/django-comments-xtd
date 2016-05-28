@@ -16,8 +16,10 @@ urlpatterns = [
         views.sent, name='comments-xtd-sent'),
     url(r'^confirm/(?P<key>[^/]+)$',
         views.confirm, name='comments-xtd-confirm'),
-    url(r'^mute/(?P<key>[^/]+)$',
-        views.mute, name='comments-xtd-mute'),
+    url(r'^edit-followup/(?P<key>[^/]+)$',
+        views.followup, name='comments-xtd-edit-followup'),
+    url(r'^checkout/(?P<key>[^/]+)$',
+        views.checkout, name='comments-xtd-checkout'),
     url(r'discarded/$',
         views.discarded, name='comments-xtd-discarded'),
 ]

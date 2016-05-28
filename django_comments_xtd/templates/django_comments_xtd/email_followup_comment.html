@@ -1,16 +1,12 @@
 <p>{{ user_name }},</p>
 
-<p>There is a new comment following up yours.</p>
+<p>There is a new comment following up yours:
+  <blockquote><i>{{ comment.comment }}</i></blockquote>
+  <br/>
+  Sent by: {{ comment.name }}, {{ comment.submit_date|date:"SHORT_DATE_FORMAT" }}<br/> to the post <strong>{{ content_object.title }}</strong>.</p>
 
-<p>Sent by: {{ comment.name }}, {{ comment.submit_date|date:"SHORT_DATE_FORMAT" }}<br/>
-<a href="http://{{ site.domain }}{{ content_object.get_absolute_url }}">http://{{ site.domain }}{{ content_object.get_absolute_url }}</a></p>
+<p>Click on the following links to either <a href="{{ schema }}://{{ site.domain }}{{ checkout_url }}">see the comment</a> or to <a href="{{ schema }}://{{ site.domain }}{{ followup_url }}">toggle follow-up notifications</a>.</p>
 
-<p>The comment:<br/>
-<i>{{ comment.comment }}</i>
-</p>
-
-<p>Click <a href="http://{{ site.domain }}{{ mute_url }}">http://{{ site.domain }}{{ mute_url|slice:":40" }}...</a> to mute the comments thread. You will no longer receive follow-up notifications.</p>
 <p>--<br/>
-Kind regards,<br/>
-{{ site }}
-</p>
+  Kind regards,<br/>
+  {{ site }}</p>

@@ -6,32 +6,43 @@
  * Licensed under the MIT License.
  */
 (function($) {
-  var settings;
-  var $commentsXtd;
-
-  $.fn.commentsXtd = function(opts) {
-    settings = $.extend({}, $.fn.commentsXtd.opts, opts);
-    $commentsXtd = this;
-    initReplyLinks($commentsXtd);
-    initForm($commentsXtd.find('FORM[data-comment-id=main]'));
+  var $comments;
+  var old = $.fn.comments;
+  
+  $.fn.comments = function(opts) {
+    $.fn.comments.config = $.extend({}, $.fn.comments.opts, opts);
+    $comments = this;
+    initReplyLinks($comments);
+    initForm($comments.find('FORM[data-comment-id="main"]'));
     return this;
   }
 
+  $.fn.comments.config = null;
+
+  $.fn.comments.opts = {
+    onPostCommentSuccess: function(data) {},
+    onPostCommentError: function(data) {},
+    replyClickURL: '',
+    onReplyClickSuccess: function(data) {},
+    onReplyClickError: function(data) {}
+  };  
+  
   function setClicked() {
     clicked = this.name;
   }
   
-  function loadReplyForm(cid, elem) {
+  function loadReplyForm() {
+    var link = this;
+    var cid = link.dataset.commentId;
     $.ajax({
-      url: settings.replyClickURL.replace(/0/, cid),
+      url: $.fn.comments.config.replyClickURL.replace(/0/, cid),
       cache: false
     }).done(function(data) {
-      data.elem = elem;
-      settings.replyClickSuccessCallback(data);
-      initForm($('FORM[data-comment-id='+cid+']'));
+      $.fn.comments.config.onReplyClickSuccess.call(link, data);
+      initForm($('FORM[data-comment-id="'+cid+'"]'));
     }).error(function(xhr, status, errorThrown) {
-      data = {status:'error', elem:elem, xhr:xhr, errorThrown:errorThrown};
-      settings.replyClickErrorCallback(data);
+      data = {status:'error', xhr:xhr, errorThrown:errorThrown};
+      $.fn.comments.config.onReplyClickError.call(link, data);
     });
   }
 
@@ -50,32 +61,30 @@
       dataType: 'json',
       success: function(data) {
         if(data.status=='discarded') {
-          window.location.href = settings.discardedURL;
+          window.location.href = data.url;
+        } else if(data.status=='posted') {          
+          window.location.href = data.url;
         } else {
-	      settings.postSuccessCallback.call(event, data);
+	      $.fn.comments.config.onPostCommentSuccess.call(event, data);
         }
       },
       error: function(xhr, status, errorThrown) {
-        settings.postErrorCallback.call(event, xhr, status, errorThrown);
+        $.fn.comments.config.onPostCommentError.call(event, xhr, status, errorThrown);
       }
     });
   }
 
-  function initReplyLinks(elem) {
-    elem.find('*[data-comment-element=replylink]').click(function(event) {
+  function initReplyLinks(target) {
+    target.find('[data-comment-element="replylink"]').click(function(event) {
       event.preventDefault();
-      $link = event.target;
-      var cid = $link.dataset.commentId;
-      if($('FORM[data-comment-id='+cid+']').length==0) {
-        loadReplyForm(cid, $link);
+      link = event.target;
+      var cid = link.dataset.commentId;
+      if($('FORM[data-comment-id="'+cid+'"]').length==0) {
+        loadReplyForm.call(link);
       } else {
-        if(settings.replyClickSuccessCallback != null) {
-          settings.replyClickSuccessCallback({
-            status: 'unchanged',
-            html: '',
-            cid: cid,
-            elem: this
-          });
+        if($.fn.comments.config.onReplyClickSuccess != null) {
+          $.fn.comments.config.onReplyClickSuccess.call(
+            link, {status: 'unchanged', cid: cid})
         }
       }
       return false;
@@ -90,13 +99,11 @@
     form.submit(submitForm);
   };
 
-  $.fn.commentsXtd.opts = {
-    postURL: '',
-    postSuccessCallback: function(data) {},
-    postErrorCallback: function(data) {},
-    replyClickURL: '',
-    replyClickSuccessCallback: function(data) {},
-    replyClickErrorCallback: function(data) {}
-  };  
+  //----------------------------------------------------------------------
+  // NoConflict
+  $.fn.comments.noConflict = function() {
+    $.fn.comments = old;
+    return this;
+  };
   
 })(jQuery);

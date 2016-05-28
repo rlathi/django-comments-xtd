@@ -26,7 +26,9 @@ class MaxThreadLevelExceededException(Exception):
         self.max_by_app = max_thread_level_for_content_type(content_type)
 
     def __str__(self):
-        return ugettext("Can not post comments over the thread level %{max_thread_level}") % {"max_thread_level": self.max_by_app}
+        return (ugettext("Can not post comments over the thread level "
+                        "%{max_thread_level}") %
+                {"max_thread_level": self.max_by_app})
 
 
 #----------------------------------------------------------------------
@@ -42,7 +44,9 @@ class XtdCommentManager(models.Manager):
         return self.for_content_types(content_types)
 
     def for_content_types(self, content_types):
-        qs = self.get_queryset().filter(content_type__in=content_types).reverse()
+        qs = self.get_queryset()\
+                 .filter(content_type__in=content_types, is_public=True)\
+                 .reverse()
         return qs
 
 
@@ -51,7 +55,9 @@ class XtdComment(Comment):
     parent_id = models.IntegerField(default=0)
     level = models.SmallIntegerField(default=0)
     order = models.IntegerField(default=1, db_index=True)
-    followup = models.BooleanField(help_text=_("Receive by email further comments in this conversation"), blank=True, default=False)
+    followup = models.BooleanField(blank=True, default=False,
+                                   help_text=_("Receive by email further "
+                                               "comments in this conversation"))
     objects = XtdCommentManager()
 
     class Meta:
@@ -83,12 +89,13 @@ class XtdComment(Comment):
         self.thread_id = parent.thread_id
         self.level = parent.level + 1
         qc_eq_thread = XtdComment.objects.filter(thread_id = parent.thread_id)
-        qc_ge_level = qc_eq_thread.filter(level__lte = parent.level,
-                                          order__gt = parent.order)
+        qc_ge_level = qc_eq_thread.filter(level__lte=parent.level,
+                                          order__gt=parent.order)
         if qc_ge_level.count():
             min_order = qc_ge_level.aggregate(Min('order'))['order__min']
-            XtdComment.objects.filter(thread_id = parent.thread_id,
-                                      order__gte = min_order).update(order=F('order')+1)
+            XtdComment.objects.filter(thread_id=parent.thread_id,
+                                      order__gte=min_order)\
+                              .update(order=F('order')+1)
             self.order = min_order
         else:
             max_order = qc_eq_thread.aggregate(Max('order'))['order__max']
@@ -155,6 +162,10 @@ class TmpXtdComment(dict):
     """
     _default_manager = DummyDefaultManager()
 
+    # def __init__(self, *args, **kwargs):
+    #     self['is_public'] = True
+    #     super(TmpXtdComment, self).__init__(*args, **kwargs)
+    
     def __getattr__(self, key):
         try:
             return self[key]
@@ -177,6 +188,21 @@ class TmpXtdComment(dict):
         return (TmpXtdComment, (), None, None, six.iteritems(self))
 
 
+#----------------------------------------------------------------------
+class CommentTarget(models.Model):
+    """
+    Vanilla parent object for comments that target a non-Django model.
+
+    CommentTarget is a simple approach to allow django-comments-xtd 
+    manage comments attached to URLs. This way you can attach comments
+    to any resource in the Web. See the rtd_comments demo.
+    """
+    url = models.URLField(primary_key=True)
+
+    def __str__(self):
+        return self.url
+    
+    
 #----------------------------------------------------------------------
 class BlackListedDomain(models.Model):
     """

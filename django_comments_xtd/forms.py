@@ -39,7 +39,24 @@ class XtdCommentForm(CommentForm):
         data.update({'thread_id': 0, 'level': 0, 'order': 1,
                      'parent_id': self.cleaned_data['reply_to'],
                      'followup': self.cleaned_data['followup']})
-        if settings.COMMENTS_XTD_CONFIRM_EMAIL:
-            # comment must be verified before getting approved
-            data['is_public'] = False
+        # if settings.COMMENTS_XTD_CONFIRM_EMAIL:
+        #     # comment must be verified before getting approved
+        #     data['is_public'] = False
         return data
+
+
+class FollowUpForm(forms.Form):
+    key = forms.CharField(widget=forms.HiddenInput)
+    followup = forms.BooleanField(label=("Enable follow-up notifications "
+                                         "for this comment"), required=False)
+
+    def __init__(self, *args, **kwargs):
+        comment = kwargs.pop("comment", None)
+        if comment:
+            initial = kwargs.pop("initial", {})
+            initial.update({"followup": comment.followup})
+            kwargs["initial"] = initial
+        super(FollowUpForm, self).__init__(*args, **kwargs)
+
+
+        

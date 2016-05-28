@@ -3,24 +3,29 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Introduction
-============
+django-comments-xtd
+===================
 
-**django-comments-xtd** extends `django-contrib-comments <https://pypi.python.org/pypi/django-contrib-comments>`_ framework with:
+**django-comments-xtd** is a complete commenting application for the Django Web Framework offering the following set of features:
 
 .. index::
    single: Features
 
-1. Thread support, so comments may be nested
-2. The maximum thread level can be set up either for all models or on a per app.model basis
-3. Optional notification of follow-up comments via email
-4. Mute links on follow-up emails to allow follow-up notification cancellation
-5. Comment confirmation via email when users are not authenticated
-6. Comments hit the database only when have been confirmed
-7. Template tags to list/render the last N comments posted to any given list of app.model pairs
-8. Comments can be formatted in Markdown, reStructuredText, linebreaks or plain text
-9. Emails sent through threads (can be disable to allow other solutions, like a Celery app)
+1. Comments can be nested up to a customizable maximum thread level.
+2. Users can opt-in to receive notifications of follow-up comments via email.
+3. Notifications come with a link to toggle comments follow-up at will.
+4. Comment confirmation via email when users are not authenticated.
+5. Follow-up notification links allow users to skip further confirmation by email.
+6. Comments hit the database only after users, when not authenticated, confirm them by email.
+7. Template tags to list/render the last N comments posted to any given list of app.model pairs.
+8. Moderation view included, so that moderators can quickly approve/reject pending comments.
+9. Comments can be flagged so that moderation is requested for such comments.
+10. AJAX client interactions performed through included jQuery plugin.  
+11. Emails are queued and sent with a separated process.
+12. A basic editor or a `ProseMirror <https://prosemirror.net>`_ editor.
 
+See the features in action in the `live demo <https://www.swedrux.com/django-comments-xtd/demo/>`_.
+    
 .. toctree::
    :maxdepth: 2
 

@@ -38,7 +38,7 @@
       {% endif %}
       <ul id="comment-list" class="media-list">
         {% get_xtdcomment_tree for object as comments_tree %}
-        {% include "comments/tree.html" with comments=comments_tree %}
+        {% include "articles/comments_tree.html" with comments=comments_tree %}
       </ul>
     </div>
   </div>
@@ -50,17 +50,15 @@
 <script src="{% static 'js/demo.js' %}"></script>
 <script>
   $(function() {
-    $('#comments').commentsXtd({
-      postURL: "{% url 'comments-xtd-post-ajax' %}",
-      discardedURL: "{% url 'comments-xtd-discarded' %}",
-      postSuccessCallback: postSuccessCallback,
-      postErrorCallback: postErrorCallback,
+    $(document).comments({
+      onPostCommentSuccess: onPostCommentSuccess,
+      onPostCommentError: onPostCommentError,
       replyClickURL: "{% url 'comments-xtd-reply-ajax' cid=0 %}",
-      replyClickSuccessCallback: replyClickSuccessCallback,
-      replyClickErrorCallback: replyClickErrorCallback,
+      onReplyClickSuccess: onReplyClickSuccess,
+      onReplyClickError: onReplyClickError,
     });
   
-    _showFieldsOnFocus(
+    showFieldsOnFocus(
       $('FORM[data-comment-element=form][data-comment-id=main]')
     );
   });
