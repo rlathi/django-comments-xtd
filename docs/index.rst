@@ -13,7 +13,7 @@ django-comments-xtd
 
 1. Comments can be nested up to a customizable maximum thread level.
 2. Users can opt-in to receive notifications of follow-up comments via email.
-3. Notifications come with a link to toggle comments follow-up at will.
+3. Notifications arrive with a link to toggle follow-up comments at will.
 4. Comment confirmation via email when users are not authenticated.
 5. Follow-up notification links allow users to skip further confirmation by email.
 6. Comments hit the database only after users, when not authenticated, confirm them by email.

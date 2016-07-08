@@ -127,8 +127,8 @@ DEFAULT_FROM_EMAIL  = "Alice Bloggs <alice@example.com>"
 SERVER_EMAIL        = DEFAULT_FROM_EMAIL
 
 # Fill in actual EMAIL settings above, and comment out the 
-# following line to let this django demo sending emails
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# following line to let this demo send emails.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 COMMENTS_APP = "django_comments_xtd"
 COMMENTS_XTD_CONFIRM_EMAIL = True
