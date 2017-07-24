@@ -3,6 +3,7 @@ from django.conf.urls import include, url
 from rest_framework.urlpatterns import format_suffix_patterns
 
 from django_comments_xtd import api, views
+from django_comments_xtd.api.views import ApiCommentsView
 
 urlpatterns = [
     url(r'^sent/$', views.sent, name='comments-xtd-sent'),
@@ -30,6 +31,8 @@ urlpatterns = [
         name='comments-xtd-api-feedback'),
     url(r'^api/flag/$', api.CreateReportFlag.as_view(),
         name='comments-xtd-api-flag'),
+    url(r'^api/comment-list/(?P<content_type>\w+[-]{1}\w+)/(?P<object_pk>[0-9]+)/$',
+        view=ApiCommentsView.as_view(), name='comments-xtd-api-list-2'),
 
     url(r'', include("django_comments.urls")),
 ]
